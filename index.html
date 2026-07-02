@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Plan Pracy — Dział Oświetlenia · Teatr Narodowy</title>
+
+<!-- PWA: manifest i ikony — pozwala "zainstalować" stronę jako aplikację -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+
+<!-- iOS: otwieranie w trybie pełnoekranowym (standalone), bez Safari UI -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plan Pracy">
+
+<!-- Android/Chrome: kolor paska statusu i tryb standalone -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0F0F0F; --card:#171717; --card2:#1A1A1A;
+  --line:rgba(255,255,255,.07);
+  --gold:#C8A84B; --gold-p:rgba(200,168,75,.1); --gold-l:rgba(200,168,75,.25);
+  --text:#E2DDD4; --muted:#6B6560; --dim:#2E2B27;
+  --bog:#C8A84B; --wie:#5A9E72; --stu:#B85555; --abs:#9E7040;
+  --bog-p:rgba(200,168,75,.1); --wie-p:rgba(90,158,114,.1); --stu-p:rgba(184,85,85,.1);
+  /* aliasy dla kompatybilności z JS */
+  --cr:var(--text); --cr-m:var(--muted); --cr-d:var(--dim);
+  --gold-d:#7A6418;
+  --ink:var(--bg); --card2:#1A1A1A;
+  --bog-c:var(--bog); --wie-c:var(--wie); --stu-c:var(--stu); --abs-c:var(--abs);
+  --bog-b:var(--bog-p); --wie-b:var(--wie-p); --stu-b:var(--stu-p);
+  --bog-l:rgba(200,168,75,.25); --wie-l:rgba(90,158,114,.25); --stu-l:rgba(184,85,85,.25);
+  --abs-b:rgba(158,112,64,.1); --abs-l:rgba(158,112,64,.25);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .7s,visibility .7s}
+#splash.out{opacity:0;visibility:hidden;pointer-events:none}
+.sp-halo{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(200,168,75,.06),transparent 70%);animation:pls 3s ease-in-out infinite}
+.sp-beam{position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:35vh;background:linear-gradient(to bottom,rgba(200,168,75,.28),transparent);animation:pls 3s ease-in-out infinite}
+@keyframes pls{0%,100%{opacity:.3}50%{opacity:.9}}
+.sp-eye{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:18px;z-index:1}
+.sp-title{font-size:40px;font-weight:700;color:var(--text);letter-spacing:-2px;line-height:1;z-index:1;text-align:center}
+.sp-title em{font-style:normal;color:var(--gold)}
+.sp-rule{width:24px;height:1px;background:var(--gold);margin:16px 0;z-index:1;opacity:.4}
+.sp-sub{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);z-index:1}
+.sp-status{font-size:11px;color:var(--muted);margin-top:32px;z-index:1;min-height:16px;text-align:center;padding:0 16px}
+.sp-dots{display:flex;gap:5px;margin-top:12px;z-index:1}
+.sp-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.2;animation:dn 1.4s ease-in-out infinite}
+.sp-dot:nth-child(2){animation-delay:.2s}.sp-dot:nth-child(3){animation-delay:.4s}
+@keyframes dn{0%,100%{opacity:.2}50%{opacity:.8}}
+
+/* APP */
+#app{display:none;max-width:860px;margin:0 auto;padding:0 20px 80px}
+#app.on{display:block;animation:fup .35s ease both}
+@keyframes fup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:22px 0 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px}
+.h-eye{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.h-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px}
+.h-title em{font-style:normal;color:var(--gold)}
+.h-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.sync-info{font-size:11px;color:var(--muted);text-align:right}
+.sync-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--wie);margin-right:4px;vertical-align:middle}
+.sync-dot.warn{background:var(--gold)}.sync-dot.err{background:var(--stu)}
+.load-bar{height:2px;background:var(--card2);overflow:hidden;opacity:0;transition:opacity .2s}
+.load-bar.on{opacity:1}
+.load-bar::after{content:'';display:block;height:100%;width:30%;background:var(--gold);animation:sli 1s ease-in-out infinite}
+@keyframes sli{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
+
+/* NAV — zakładki z podkreśleniem */
+.main-nav{display:flex;width:100%;margin:18px 0 0;border-bottom:1px solid var(--line)}
+.nav-tab{padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--muted);background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--gold)}
+.nav-tab:hover:not(.active){color:var(--text)}
+
+/* WEEK PILLS */
+.week-tabs{display:flex;gap:6px;margin:16px 0 0;flex-wrap:wrap}
+.week-tab{padding:5px 14px;font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s}
+.week-tab.active{background:var(--gold-p);color:var(--gold);border-color:var(--gold-l)}
+.week-tab:hover:not(.active){border-color:rgba(255,255,255,.14);color:var(--text)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:18px 0;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stat{background:var(--card);padding:14px 16px}
+.stat-n{font-size:28px;font-weight:700;color:var(--gold);letter-spacing:-1px;line-height:1}
+.stat-l{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+/* FILTERS */
+.frow{display:flex;gap:6px;margin:12px 0 16px;flex-wrap:wrap;align-items:center}
+.flbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.fbtn{padding:4px 12px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.fbtn:hover{color:var(--text);border-color:rgba(255,255,255,.16)}
+.fbtn.active{background:var(--card2);color:var(--text);border-color:rgba(255,255,255,.16)}
+.fbtn[data-f=bog].active{background:var(--bog-p);color:var(--bog);border-color:var(--bog-l)}
+.fbtn[data-f=wie].active{background:var(--wie-p);color:var(--wie);border-color:var(--wie-l)}
+.fbtn[data-f=stu].active{background:var(--stu-p);color:var(--stu);border-color:var(--stu-l)}
+
+/* DAY GROUP */
+.dg{margin-bottom:24px}
+.dg-hd{display:flex;align-items:baseline;gap:10px;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.dg-d{font-size:26px;font-weight:700;color:var(--gold);letter-spacing:-1px;line-height:1;min-width:34px}
+.dg-wd{font-size:13px;font-weight:600;color:var(--text)}
+.dg-mo{font-size:11px;color:var(--muted);margin-left:2px}
+.dg-rule{display:none}
+
+/* REP BANNER */
+.rep-banner{border-left:2px solid var(--line);padding-left:12px;margin-bottom:8px;display:flex;flex-direction:column;gap:0}
+.rep-row{display:flex;align-items:center;gap:8px;padding:3px 0}
+.rep-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.rep-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;min-width:100px;flex-shrink:0}
+.rep-val{font-size:11px;color:var(--muted)}
+.rep-name{font-size:11px;color:var(--muted)}
+.rep-none{font-size:11px;color:var(--dim)}
+.rep-tag{font-size:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:5px}
+.tag-spektakl{background:var(--bog-p);color:var(--bog)}
+.tag-technika{background:rgba(100,80,180,.1);color:#8878C8}
+.tag-inne{background:var(--stu-p);color:var(--stu)}
+
+/* SHIFT CARD */
+.sc{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:4px;border-radius:6px;background:var(--card);border-left:2px solid var(--line);transition:background .15s}
+.sc:hover{background:var(--card2)}
+.sc.bog{border-left-color:var(--bog)}.sc.wie{border-left-color:var(--wie)}
+.sc.stu{border-left-color:var(--stu)}.sc.abs{border-left-color:var(--abs);opacity:.7}
+.sc.help{border-left-color:var(--stu)}
+.sc-hd{display:flex;flex-direction:column;gap:2px}
+.sc-time{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.sc-dur{font-size:10px;color:var(--muted)}
+.sc-meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+
+/* BADGES */
+.bdg{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:3px}
+.bb{background:var(--bog-p);color:var(--bog)}.bw{background:var(--wie-p);color:var(--wie)}
+.bs{background:var(--stu-p);color:var(--stu)}.ba{background:var(--abs-b);color:var(--abs)}
+.bh{background:var(--bog-p);color:var(--bog)}
+.bhelp{background:var(--stu-p);color:var(--stu)}
+.bhelp-tag{background:var(--stu-p);color:var(--stu);font-weight:700}
+.bg{background:rgba(255,255,255,.05);color:var(--muted)}
+
+/* NIEOBECNOŚCI — prosta lista po datach */
+.abs-day{margin-bottom:20px}
+.abs-day-hd{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.abs-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;margin-bottom:4px;border-radius:6px;background:var(--card);border-left:2px solid var(--abs)}
+.abs-row-name{font-size:13px;font-weight:600;color:var(--text)}
+.abs-row-type{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:rgba(158,112,64,.12);color:var(--abs)}
+
+/* REPERTUAR */
+.rep-month-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.rep-month-btn{padding:5px 12px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.rep-month-btn:hover{color:var(--text);border-color:rgba(255,255,255,.16)}
+.rep-month-title{font-size:16px;font-weight:700;color:var(--text);flex:1;text-align:center;letter-spacing:-.3px}
+.rep-show-card{padding:10px 14px;margin-bottom:4px;background:var(--card);border-radius:6px;transition:background .15s}
+.rep-show-card:hover{background:var(--card2)}
+.rep-show-meta{display:flex;gap:8px;align-items:center;margin-bottom:3px;flex-wrap:wrap}
+.rep-show-time{font-size:11px;font-weight:700;color:var(--gold)}
+.rep-show-scene{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:1px 6px;border-radius:3px}
+.rsc-bog{background:var(--bog-p);color:var(--bog)}.rsc-wie{background:var(--wie-p);color:var(--wie)}.rsc-stu{background:var(--stu-p);color:var(--stu)}
+.rep-show-title{font-size:13px;font-weight:500;color:var(--text)}
+
+/* NOTATKI */
+.note-composer{background:var(--card);border-radius:8px;padding:14px;margin-bottom:16px}
+.note-input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:5px;padding:9px 11px;color:var(--text);font-family:inherit;font-size:13px;resize:vertical;min-height:52px;transition:border-color .15s}
+.note-input:focus{outline:none;border-color:var(--gold-l)}
+.note-input::placeholder{color:var(--muted)}
+.note-composer-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.note-author-input{flex:1;min-width:120px;background:var(--card2);border:1px solid var(--line);border-radius:5px;padding:7px 11px;color:var(--text);font-family:inherit;font-size:12px;transition:border-color .15s}
+.note-author-input:focus{outline:none;border-color:var(--gold-l)}
+.note-author-input::placeholder{color:var(--muted)}
+.note-submit-btn{padding:7px 16px;border-radius:5px;border:1px solid var(--gold-l);background:var(--gold-p);color:var(--gold);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.note-submit-btn:hover{background:rgba(200,168,75,.18)}
+.note-submit-btn:disabled{opacity:.4;cursor:default}
+.note-card{background:var(--card);border-radius:6px;padding:14px 16px;margin-bottom:6px;display:flex;flex-direction:column;gap:4px}
+.note-card-hd{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.note-card-author{font-size:11px;font-weight:700;color:var(--gold)}
+.note-card-date{font-size:10px;color:var(--muted)}
+.note-card-text{font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap}
+/* przycisk usuwania — widoczny po prawej w nagłówku karty */
+.note-delete-btn{background:none;border:1px solid var(--line);border-radius:4px;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 8px;transition:all .15s;flex-shrink:0;font-family:inherit}
+.note-delete-btn:hover{color:var(--stu);border-color:var(--stu)}
+
+/* INSTALL BAR */
+.install-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-top:32px;flex-wrap:wrap}
+.install-bar-text{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.install-bar-icon{color:var(--gold)}
+.install-bar-btn{padding:6px 16px;border-radius:5px;border:1px solid var(--gold-l);background:var(--gold-p);color:var(--gold);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.install-bar-btn:hover{background:rgba(200,168,75,.18)}
+.ios-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:998;display:flex;align-items:flex-end;justify-content:center}
+.ios-modal{background:var(--card);border:1px solid var(--line);border-radius:12px 12px 0 0;padding:22px 18px 26px;width:100%;max-width:440px}
+.ios-modal-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;text-align:center}
+.ios-modal-step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);padding:8px 0;border-bottom:1px solid var(--line)}
+.ios-modal-step:last-of-type{border-bottom:none;margin-bottom:16px}
+.ios-modal-num{display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--gold-p);color:var(--gold);font-size:10px;font-weight:700;flex-shrink:0}
+.ios-share-icon{display:inline-block;padding:1px 5px;border:1px solid var(--line);border-radius:3px;color:var(--gold);font-size:10px}
+.ios-modal-close{width:100%;padding:10px;border-radius:5px;border:1px solid var(--gold-l);background:var(--gold-p);color:var(--gold);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;cursor:pointer;font-family:inherit}
+
+/* MISC */
+.section-hidden{display:none}
+.err-box{background:var(--card);border:1px solid var(--stu-p);border-radius:8px;padding:28px;text-align:center;max-width:480px;margin:32px auto}
+.err-box-icon{font-size:22px;margin-bottom:8px;display:block;opacity:.5}
+.err-box-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+.err-box-desc{font-size:12px;color:var(--muted);line-height:1.7}
+.err-box-code{font-size:10px;color:var(--dim);margin-top:10px;font-family:monospace;word-break:break-all}
+.empty{text-align:center;padding:40px 0;font-size:13px;color:var(--muted);font-style:italic}
+footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--line);text-align:center;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+footer span{color:var(--muted)}
+/* SEKCJA NIEOBECNOŚCI — stare klasy kompatybilność */
+.abs-section{margin-bottom:0}.abs-section-hd{display:none}.abs-grid{display:block}
+.abs-card{background:var(--card);border-left:2px solid var(--abs);border-radius:6px;padding:12px 14px;margin-bottom:4px}
+.abs-name{font-size:13px;font-weight:600;color:var(--text)}
+.abs-type{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--abs);margin-top:2px;font-weight:700}
+.abs-date{font-size:11px;color:var(--muted);margin-top:3px}
+@media(max-width:600px){
+  #app{padding:0 14px 60px}
+  .stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}
+  .h-title{font-size:18px}.dg-d{font-size:22px}
+  .main-nav{width:100%}.nav-tab{flex:1;text-align:center;font-size:10px;padding:9px 6px}
+  .rep-lbl{min-width:80px}
+}
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="sp-halo"></div><div class="sp-beam"></div>
+  <div class="sp-eye">Teatr Narodowy · Warszawa</div>
+  <div class="sp-title">Plan<br><em>Pracy</em></div>
+  <div class="sp-rule"></div>
+  <div class="sp-sub">Dział Oświetlenia</div>
+  <div class="sp-status" id="spStatus">Łączenie z serwerem…</div>
+  <div class="sp-dots"><div class="sp-dot"></div><div class="sp-dot"></div><div class="sp-dot"></div></div>
+</div>
+
+<div id="app">
+  <header>
+    <div>
+      <div class="h-eye">Dział Oświetlenia · Teatr Narodowy</div>
+      <div class="h-title">Plan <em>Pracy</em></div>
+    </div>
+    <div class="h-r">
+      <div class="sync-info"><span class="sync-dot" id="syncDot"></span><span id="syncInfo">—</span></div>
+    </div>
+  </header>
+  <div class="load-bar" id="loadBar"></div>
+
+  <!-- Globalne ostrzeżenie — widoczne we wszystkich zakładkach -->
+  <div id="globalAlert" style="display:none;align-items:center;gap:10px;
+    background:rgba(192,50,50,.15);border:1px solid rgba(192,50,50,.4);border-radius:8px;
+    padding:11px 16px;margin-top:14px;color:#E08080">
+    <span style="font-size:16px">⚠</span>
+    <span id="globalAlertText" style="font-size:13px;font-weight:600;flex:1;color:#E08080"></span>
+    <button onclick="showAlertPrompt()" style="background:none;border:none;color:rgba(224,128,128,.5);
+      cursor:pointer;font-size:11px;font-family:inherit;flex-shrink:0;padding:0">Edytuj</button>
+  </div>
+
+  <div id="secPlan">
+    <div class="main-nav" style="width:100%">
+      <button class="nav-tab active" onclick="switchSection('plan',this)">Plan Pracy</button>
+      <button class="nav-tab " onclick="switchSection('repertuar',this)">Repertuar</button>
+      <button class="nav-tab " onclick="switchSection('abs',this)">Nieobecności</button>
+      <button class="nav-tab " onclick="switchSection('notatki',this)">Notatki</button>
+      <button onclick="showAlertPrompt()" style="margin-left:auto;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;padding:9px 14px;border-left:1px solid var(--line);
+  transition:color .15s" onmouseover="this.style.color='#E08080'"
+  onmouseout="this.style.color='var(--muted)'">⚠</button>
+    </div>
+    <div class="week-tabs" id="wTabs"></div>
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="sAll">—</div><div class="stat-l">Zmian ogółem</div></div>
+      <div class="stat"><div class="stat-n" id="sBog">—</div><div class="stat-l"><span style="color:var(--bog-c)">●</span> Bogusławskiego</div></div>
+      <div class="stat"><div class="stat-n" id="sWie">—</div><div class="stat-l"><span style="color:var(--wie-c)">●</span> Wierzbowa</div></div>
+      <div class="stat"><div class="stat-n" id="sStu">—</div><div class="stat-l"><span style="color:var(--stu-c)">●</span> Studio</div></div>
+    </div>
+    <div class="frow">
+      <span class="flbl">Filtr</span>
+      <button class="fbtn active" data-f="all" onclick="setF(this)">Wszystkie</button>
+      <button class="fbtn" data-f="bog" onclick="setF(this)">Bogusławskiego</button>
+      <button class="fbtn" data-f="wie" onclick="setF(this)">Wierzbowa</button>
+      <button class="fbtn" data-f="stu" onclick="setF(this)">Studio</button>
+    </div>
+    <div id="planContent"></div>
+  </div>
+
+  <div id="secRepertuar" class="section-hidden">
+    <div class="main-nav" style="width:100%">
+      <button class="nav-tab " onclick="switchSection('plan',this)">Plan Pracy</button>
+      <button class="nav-tab active" onclick="switchSection('repertuar',this)">Repertuar</button>
+      <button class="nav-tab " onclick="switchSection('abs',this)">Nieobecności</button>
+      <button class="nav-tab " onclick="switchSection('notatki',this)">Notatki</button>
+      <button onclick="showAlertPrompt()" style="margin-left:auto;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;padding:9px 14px;border-left:1px solid var(--line);
+  transition:color .15s" onmouseover="this.style.color='#E08080'"
+  onmouseout="this.style.color='var(--muted)'">⚠</button>
+    </div>
+    <div style="margin-top:18px" id="repContent"><div class="empty">Ładowanie repertuaru…</div></div>
+  </div>
+
+  <div id="secAbs" class="section-hidden">
+    <div class="main-nav" style="width:100%">
+      <button class="nav-tab " onclick="switchSection('plan',this)">Plan Pracy</button>
+      <button class="nav-tab " onclick="switchSection('repertuar',this)">Repertuar</button>
+      <button class="nav-tab active" onclick="switchSection('abs',this)">Nieobecności</button>
+      <button class="nav-tab " onclick="switchSection('notatki',this)">Notatki</button>
+      <button onclick="showAlertPrompt()" style="margin-left:auto;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;padding:9px 14px;border-left:1px solid var(--line);
+  transition:color .15s" onmouseover="this.style.color='#E08080'"
+  onmouseout="this.style.color='var(--muted)'">⚠</button>
+    </div>
+    <div style="margin-top:18px" id="absContent"><div class="empty">Brak danych…</div></div>
+  </div>
+
+  <div id="secNotatki" class="section-hidden">
+    <div class="main-nav" style="width:100%">
+      <button class="nav-tab " onclick="switchSection('plan',this)">Plan Pracy</button>
+      <button class="nav-tab " onclick="switchSection('repertuar',this)">Repertuar</button>
+      <button class="nav-tab " onclick="switchSection('abs',this)">Nieobecności</button>
+      <button class="nav-tab active" onclick="switchSection('notatki',this)">Notatki</button>
+      <button onclick="showAlertPrompt()" style="margin-left:auto;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;padding:9px 14px;border-left:1px solid var(--line);
+  transition:color .15s" onmouseover="this.style.color='#E08080'"
+  onmouseout="this.style.color='var(--muted)'">⚠</button>
+    </div>
+    <div style="margin-top:18px">
+      <div class="note-composer">
+        <textarea id="noteText" class="note-input" placeholder="Napisz ważną informację dla zespołu…" rows="3"></textarea>
+        <div class="note-composer-row">
+          <input id="noteAuthor" class="note-author-input" type="text" placeholder="Twoje imię (opcjonalnie)">
+          <button class="note-submit-btn" onclick="submitNote()">Dodaj notatkę</button>
+        </div>
+      </div>
+      <div id="notatkiContent" style="margin-top:18px"><div class="empty">Ładowanie notatek…</div></div>
+    </div>
+  </div>
+
+  <div id="installBar" class="install-bar">
+    <div class="install-bar-text">
+      <span class="install-bar-icon">⬇</span>
+      <span>Zainstaluj aplikację na ekranie głównym</span>
+    </div>
+    <button class="install-bar-btn" onclick="handleInstallClick()">Zainstaluj</button>
+  </div>
+
+  <div id="iosInstallModal" class="ios-modal-overlay" style="display:none" onclick="if(event.target===this)closeIosModal()">
+    <div class="ios-modal">
+      <div class="ios-modal-title">Zainstaluj na iPhone / iPad</div>
+      <div class="ios-modal-step">
+        <span class="ios-modal-num">1</span>
+        <span>Stuknij ikonę <strong>Udostępnij</strong> <span class="ios-share-icon">⎋</span> na dole ekranu</span>
+      </div>
+      <div class="ios-modal-step">
+        <span class="ios-modal-num">2</span>
+        <span>Wybierz <strong>„Dodaj do ekranu początkowego”</strong></span>
+      </div>
+      <div class="ios-modal-step">
+        <span class="ios-modal-num">3</span>
+        <span>Stuknij <strong>„Dodaj”</strong> w prawym górnym rogu</span>
+      </div>
+      <button class="ios-modal-close" onclick="closeIosModal()">Rozumiem</button>
+    </div>
+  </div>
+
+  <footer><span>Teatr Narodowy</span> · Dział Oświetlenia · Plan Pracy 2026</footer>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   ▼▼▼  WKLEJ TU SWÓJ NOWY URL Z GOOGLE APPS SCRIPT  ▼▼▼
+══════════════════════════════════════════════════════ */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyMvokgCp2LFjTDKqj1MJk-IcoELx-s7v2_wCjepQKwJR6nmRC62m7WxhLJcq1IFOOe/exec';
+
+const DAYS   = ['Niedziela','Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota'];
+const MONTHS = ['Stycznia','Lutego','Marca','Kwietnia','Maja','Czerwca','Lipca','Sierpnia','Września','Października','Listopada','Grudnia'];
+const MNAMES = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+const LABELS = {bog:'Bogusławskiego', wie:'Wierzbowa', stu:'Studio'};
+const BADGES = {bog:'bb', wie:'bw', stu:'bs'};
+const DOT_CLR= {bog:'var(--bog-c)', wie:'var(--wie-c)', stu:'var(--stu-c)'};
+const LBL_CLR= {bog:'color:var(--bog-c)', wie:'color:var(--wie-c)', stu:'color:var(--stu-c)'};
+
+let sheets={}, allAbsences=[], activeSheet=null, activeFilter='all';
+let repertuar={}, repMonth=(()=>{const n=new Date();return{y:n.getFullYear(),m:n.getMonth()+1};})();
+let notatki=[], notatkiLoaded=false, notatkiPrefetchPromise=null;
+
+/* ══ START ══════════════════════════════════════════ */
+/* ══ PWA: rejestracja Service Workera ════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('Service Worker nie zarejestrowany:', err.message);
+    });
+  });
+}
+
+/* ══ PWA: przycisk instalacji aplikacji ══════════════
+   Przycisk "Zainstaluj" jest ZAWSZE widoczny na dole strony (nie czekamy
+   na warunkowe zdarzenie beforeinstallprompt) -- jedyny wyjątek to gdy
+   aplikacja jest już otwarta jako zainstalowana (tryb standalone), wtedy
+   przycisk nie ma sensu i jest ukrywany.
+
+   Po kliknięciu zachowanie zależy od platformy:
+   - Android/Chrome/Edge/Samsung Internet: jeśli przeglądarka już zdążyła
+     przygotować natywny prompt (beforeinstallprompt), używamy go.
+     Jeśli jeszcze nie (np. zbyt szybko po wejściu na stronę), pokazujemy
+     krótką wskazówkę z menu przeglądarki jako fallback.
+   - iOS Safari: to zdarzenie nigdy nie wystąpi (Apple go nie obsługuje),
+     więc zawsze pokazujemy instrukcję ręczną: Udostępnij → Dodaj do
+     ekranu początkowego.
+*/
+let deferredInstallPrompt = null;
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true; // iOS Safari
+}
+
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent)
+      // iPadOS 13+ zgłasza się jako Mac, ale ma dotyk -- rozróżniamy tak:
+      || (/macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+window.addEventListener('appinstalled', () => {
+  const bar = document.getElementById('installBar');
+  if (bar) bar.style.display = 'none';
+  deferredInstallPrompt = null;
+});
+
+async function handleInstallClick() {
+  if (deferredInstallPrompt) {
+    // Android/Chrome/Edge -- natywny prompt instalacji jest gotowy
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    console.log('Instalacja PWA:', outcome);
+    deferredInstallPrompt = null;
+    if (outcome === 'accepted') {
+      document.getElementById('installBar').style.display = 'none';
+    }
+  } else if (isIOS()) {
+    // iOS Safari -- nie ma natywnego promptu, pokazujemy instrukcję
+    document.getElementById('iosInstallModal').style.display = 'flex';
+  } else {
+    // Android/Chrome, ale przeglądarka jeszcze nie zdążyła przygotować
+    // natywnego promptu (np. zbyt szybko po wejściu na stronę) --
+    // krótka wskazówka jak zrobić to ręcznie przez menu przeglądarki
+    alert('Aplikacja jeszcze się przygotowuje do instalacji.\n\nMożesz też zainstalować ją ręcznie: otwórz menu przeglądarki (⋮) i wybierz "Zainstaluj aplikację" lub "Dodaj do ekranu głównego".');
+  }
+}
+
+function closeIosModal() {
+  document.getElementById('iosInstallModal').style.display = 'none';
+}
+
+// Ukryj przycisk tylko jeśli aplikacja jest już otwarta jako zainstalowana
+window.addEventListener('load', () => {
+  if (isStandalone()) {
+    const bar = document.getElementById('installBar');
+    if (bar) bar.style.display = 'none';
+  }
+});
+
+window.addEventListener('load', async () => {
+  setLoad(true);
+
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'WKLEJ_URL_TUTAJ') {
+    showFatalError('Brak skonfigurowanego adresu Google Apps Script.', 'APPS_SCRIPT_URL nie został ustawiony w pliku index.html.');
+    setLoad(false);
+    return;
+  }
+
+  spStatus('Pobieranie planu pracy…');
+  // Plan, repertuar i notatki pobieramy RÓWNOLEGLE już przy starcie strony
+  // (nie czekamy aż użytkownik kliknie w zakładkę) -- dzięki temu kliknięcie
+  // w Repertuar / Notatki jest natychmiastowe, dane już tam czekają gotowe.
+  fetchRepertuarAll(); // start w tle, bez await -- pobiera CAŁY zakres miesięcy naraz
+  prefetchNotatki();                       // start w tle, bez await
+  const planOk = await fetchPlan();
+
+  setLoad(false);
+});
+
+// Pobiera notatki w tle przy starcie strony, bez aktualizowania widoku
+// (sekcja Notatki może być jeszcze ukryta) -- ustawia tylko dane i flagę,
+// żeby switchSection/loadNotatki mogło od razu pokazać gotowy wynik.
+async function prefetchNotatki(){
+  notatkiPrefetchPromise = (async () => {
+    try {
+      const url = APPS_SCRIPT_URL + '?action=notes';
+      const r = await fetch(url, { cache:'no-store', redirect:'follow' });
+      if (!r.ok) return;
+      const json = await r.json();
+      if (!json.ok) return;
+      notatki = json.data || [];
+      notatkiLoaded = true;
+    } catch(e) {
+      console.warn('Prefetch notatek nieudany (zostanie pobrane przy wejściu w zakładkę):', e.message);
+    }
+  })();
+  await notatkiPrefetchPromise;
+}
+
+/* ══ POBIERANIE PLANU ════════════════════════════════ */
+async function fetchPlan() {
+  try {
+    const url = APPS_SCRIPT_URL + '?action=plan';
+    const r = await fetch(url, { cache: 'no-store', redirect: 'follow' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    if (!json.ok) throw new Error(json.error || 'Serwer zwrócił błąd');
+    if (!json.data || !json.data.sheets || !Object.keys(json.data.sheets).length) {
+      throw new Error('Serwer zwrócił puste dane (brak arkuszy tygodniowych)');
+    }
+    processData(json.data);
+    setSyncStatus('ok', 'Na żywo z serwera · ' + nowStr());
+    spStatus('Gotowe');
+    renderAlert();
+    setTimeout(hideSplash, 350);
+    return true;
+  } catch(e) {
+    console.error('Błąd pobierania planu:', e);
+    showFatalError('Nie udało się pobrać planu pracy', e.message);
+    return false;
+  }
+}
+
+function processData(data) {
+  sheets = {};
+  allAbsences = [];
+  const names = Object.keys(data.sheets);
+  names.forEach(name => {
+    const sd = data.sheets[name];
+    sheets[name] = (sd.entries || []).map(e => ({ ...e, date: new Date(e.date) }));
+    (sd.absences || []).forEach(a => allAbsences.push({ ...a, date: new Date(a.date), sheet: name }));
+  });
+  buildTabs(names);
+  switchSheet(names[0]);
+  renderAbsences();
+}
+
+/* ══ POBIERANIE REPERTUARU ═══════════════════════════ */
+let repertuarLoaded = false, repertuarFetchPromise = null, repertuarUpdatedAt = null;
+
+// Pobiera CAŁY zbiorczy repertuar (kilka miesięcy naraz) JEDNYM zapytaniem.
+// Apps Script trzyma to wstępnie zbudowane i odświeżane raz na tydzień,
+// więc to zapytanie jest bardzo szybkie (czysty odczyt, bez scrapowania
+// narodowy.pl na żywo). Po tym jednym pobraniu zmiana miesiąca w aplikacji
+// nie wymaga już żadnego zapytania sieciowego.
+async function fetchRepertuarAll() {
+  if (repertuarLoaded) return true;
+  if (repertuarFetchPromise) return repertuarFetchPromise;
+
+  repertuarFetchPromise = (async () => {
+    try {
+      const url = APPS_SCRIPT_URL + '?action=repall';
+      const r = await fetch(url, { cache: 'no-store', redirect: 'follow' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const json = await r.json();
+      if (!json.ok) throw new Error(json.error || 'Błąd repertuaru');
+      Object.assign(repertuar, (json.data && json.data.days) || {});
+      repertuarUpdatedAt = (json.data && json.data.updated) || null;
+      repertuarLoaded = true;
+      renderRepertuar();
+      return true;
+    } catch(e) {
+      console.error('Błąd pobierania repertuaru:', e);
+      repertuarLoaded = 'error';
+      renderRepertuar();
+      return false;
+    } finally {
+      repertuarFetchPromise = null;
+    }
+  })();
+
+  return repertuarFetchPromise;
+}
+
+// Zmiana miesiąca: TYLKO operacja w pamięci, zero zapytań sieciowych --
+// dane na kilka miesięcy wstecz/wprzód już leżą gotowe od startu aplikacji.
+function changeRepMonth(y, m) {
+  repMonth = { y, m };
+  renderRepertuar();
+}
+
+/* ══ UI — PLAN ═══════════════════════════════════════ */
+function buildTabs(names){
+  document.getElementById('wTabs').innerHTML = names.map(n =>
+    `<button class="week-tab" data-s="${esc(n)}" onclick="switchSheet('${esc(n)}')">${esc(n)}</button>`
+  ).join('');
+}
+function switchSheet(name){
+  activeSheet = name;
+  document.querySelectorAll('.week-tab').forEach(t => t.classList.toggle('active', t.dataset.s === name));
+  updateStats(); renderPlan();
+}
+function updateStats(){
+  const rows = sheets[activeSheet] || [];
+  const effScene = e => e.isHelp ? 'bog' : e.scena;
+  set('sAll', rows.length || '—');
+  set('sBog', rows.filter(e => effScene(e) === 'bog').length || '0');
+  set('sWie', rows.filter(e => effScene(e) === 'wie').length || '0');
+  set('sStu', rows.filter(e => effScene(e) === 'stu').length || '0');
+}
+function setF(el){
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active'); activeFilter = el.dataset.f; renderPlan();
+}
+function renderPlan(){
+  const ct = document.getElementById('planContent');
+  const effScene = e => e.isHelp ? 'bog' : e.scena;
+  let rows = sheets[activeSheet] || [];
+  if (activeFilter !== 'all') rows = rows.filter(e => effScene(e) === activeFilter);
+  if (!rows.length) { ct.innerHTML = '<div class="empty">Brak wpisów dla wybranego filtra.</div>'; return; }
+
+  const byDate = new Map();
+  rows.forEach(e => {
+    const k = dk(e.date);
+    if (!byDate.has(k)) byDate.set(k, { date: e.date, entries: [] });
+    byDate.get(k).entries.push(e);
+  });
+
+  let html = '';
+  [...byDate.values()].sort((a,b) => a.date - b.date).forEach(({date, entries}) => {
+    html += `<div class="dg"><div class="dg-hd">
+      <div class="dg-d">${date.getDate()}</div>
+      <div><div class="dg-wd">${DAYS[date.getDay()]}</div><div class="dg-mo">${MONTHS[date.getMonth()]} ${date.getFullYear()}</div></div>
+      <div class="dg-rule"></div></div>`;
+    html += renderRepBanner(date, entries);
+    // Sortuj: najpierw zmiany "macierzyste", potem pomoc -- w obrębie sceny po godzinie
+    entries.slice().sort((a,b) => (a.isHelp - b.isHelp) || ((a.godz_od||0) - (b.godz_od||0)))
+      .forEach(e => html += rShift(e));
+    html += '</div>';
+  });
+  ct.innerHTML = html;
+}
+function renderRepBanner(date, entries){
+  const effScene = e => e.isHelp ? 'bog' : e.scena;
+  const scenes = activeFilter === 'all' ? ['bog','wie','stu'] : [activeFilter];
+  const TAG_LABEL = { technika: 'Montaż / praca techniki', spektakl: 'Spektakl / próba', inne: 'Wydarzenie' };
+  const rows = scenes.map(sc => {
+    const act = entries.find(e => effScene(e) === sc && e.act)?.act || null;
+    if (!act) return `<div class="rep-row"><div class="rep-dot" style="background:${DOT_CLR[sc]}"></div><div class="rep-lbl" style="${LBL_CLR[sc]}">${LABELS[sc]}</div><div class="rep-val"><span class="rep-none">—</span></div></div>`;
+    const tl = TAG_LABEL[act.tag] || 'Wydarzenie';
+    return `<div class="rep-row"><div class="rep-dot" style="background:${DOT_CLR[sc]}"></div><div class="rep-lbl" style="${LBL_CLR[sc]}">${LABELS[sc]}</div><div class="rep-val"><span class="rep-tag tag-${act.tag}">${tl}</span><span class="rep-name">${esc(act.label)}</span></div></div>`;
+  }).join('');
+  return `<div class="rep-banner">${rows}</div>`;
+}
+function rShift(e){
+  const ts = e.godz_do != null ? `${e.godz_od}:00 — ${e.godz_do}:00` : e.godz_od != null ? `${e.godz_od}:00` : (e.rawVal || '—');
+  const dur = (typeof e.godz_od === 'number' && typeof e.godz_do === 'number') ?
+    (() => { let d = e.godz_do - e.godz_od; if (d <= 0) d += 24; const h = Math.floor(d), m = Math.round((d-h)*60); return m ? `${h}h ${m}min` : `${h}h`; })() : '';
+  // Osoby z "pomoc" liczą się logicznie do Bogusławskiego (filtr, statystyki),
+  // ale wizualnie wyróżniamy je na czerwono, żeby od razu było widać że to
+  // nie ich macierzysta scena, tylko pomoc
+  const cls = e.isHelp ? 'help' : (e.scena || 'bog');
+  const sceneBadge = e.isHelp
+    ? `<span class="bdg bhelp">${LABELS['bog']}</span>`
+    : `<span class="bdg ${BADGES[e.scena] || 'bb'}">${LABELS[e.scena] || ''}</span>`;
+  const helpBadge = e.isHelp ? `<span class="bdg bhelp-tag">Pomoc</span>` : '';
+  return `<div class="sc ${cls}"><div class="sc-hd">
+    <div><div class="sc-time">${esc(ts)}</div>${dur ? `<div class="sc-dur">${dur}</div>` : ''}</div>
+    <div class="sc-meta">${sceneBadge}${helpBadge}<span class="bdg bg">${esc(e.name)}</span></div>
+  </div></div>`;
+}
+
+/* ══ UI — NIEOBECNOŚCI (pogrupowane po scenach, kolorowo) ══ */
+/* ══ NIEOBECNOŚCI ═══════════════════════════════════ */
+window._absPg   = window._absPg   || {};
+window._absOpen = window._absOpen  || {};
+
+const _ABS_TYPE = { 'Dzień Wolny':'DW', 'Urlop':'Urlop', 'Zwolnienie lekarskie':'L4' };
+const _ABS_PER_PAGE = 5;
+const _ABS_SCENA_OSOBY = {
+  'Zbigniew Szulim':'bog','Krzysztof Stefan':'bog','Bartłomiej Kaczalski':'bog',
+  'Dariusz Wieczorek':'bog','Tomasz Dąbrowski':'bog','Grzegorz Bussold':'bog',
+  'Kacper Bobylak':'stu','Bartłomiej Frysztak':'stu',
+  'Jarosław Wydrych':'wie','Tomasz Księżak':'wie',
+};
+const _ABS_SC_COLOR = { bog:'var(--bog)', wie:'var(--wie)', stu:'var(--stu)' };
+const _ABS_SC_ORDER = ['bog','wie','stu'];
+
+function _nameKey(name) { return name.toLowerCase().replace(/\s+/g,'-'); }
+
+function togglePerson(key) {
+  window._absOpen[key] = !window._absOpen[key];
+  const body  = document.getElementById('absp-body-' + key);
+  const arrow = document.getElementById('absp-arrow-' + key);
+  if (body)  body.style.display    = window._absOpen[key] ? 'block' : 'none';
+  if (arrow) arrow.style.transform = window._absOpen[key] ? 'rotate(180deg)' : 'rotate(0deg)';
+  if (window._absOpen[key]) _renderPersonBody(key);
+}
+
+function changePersonPage(key, delta) {
+  const list  = allAbsences.filter(a => _nameKey(a.name) === key);
+  const pages = Math.ceil(list.length / _ABS_PER_PAGE);
+  window._absPg[key] = Math.max(0, Math.min(pages - 1, (window._absPg[key]||0) + delta));
+  _renderPersonBody(key);
+}
+
+function _renderPersonBody(key) {
+  const body = document.getElementById('absp-body-' + key);
+  if (!body) return;
+  const list  = allAbsences.filter(a => _nameKey(a.name) === key).sort((a,b) => a.date - b.date);
+  const pg    = window._absPg[key] || 0;
+  const pages = Math.ceil(list.length / _ABS_PER_PAGE);
+  const slice = list.slice(pg * _ABS_PER_PAGE, pg * _ABS_PER_PAGE + _ABS_PER_PAGE);
+  let h = '';
+  slice.forEach(a => {
+    const dateStr   = DAYS[a.date.getDay()] + ', ' + a.date.getDate() + ' ' + MONTHS[a.date.getMonth()];
+    const typeLabel = _ABS_TYPE[a.type] || a.type;
+    h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)">
+      <span style="font-size:12px;color:var(--text)">${esc(dateStr)}</span>
+      <span style="font-size:9px;font-weight:700;color:var(--abs,#9E7040);text-transform:uppercase">${esc(typeLabel)}</span>
+    </div>`;
+  });
+  if (pages > 1) {
+    h += `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <button onclick="changePersonPage('${key}',-1)" style="background:none;border:1px solid var(--line);border-radius:4px;color:var(--muted);padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;opacity:${pg===0?'0.3':'1'};pointer-events:${pg===0?'none':'auto'}">←</button>
+      <span style="font-size:10px;color:var(--muted)">${pg+1} / ${pages}</span>
+      <button onclick="changePersonPage('${key}',1)" style="background:none;border:1px solid var(--line);border-radius:4px;color:var(--muted);padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;opacity:${pg===pages-1?'0.3':'1'};pointer-events:${pg===pages-1?'none':'auto'}">→</button>
+    </div>`;
+  }
+  body.innerHTML = h;
+}
+
+/* ── ALERT (ostrzeżenie na górze) ── */
+let _alertText = '';
+
+function showAlertPrompt() {
+  const pwd = prompt('Hasło:');
+  if (pwd !== 'TN2026!') { if (pwd !== null) alert('Nieprawidłowe hasło.'); return; }
+  const msg = prompt('Wpisz treść ostrzeżenia (puste = usuń):', _alertText);
+  if (msg === null) return;
+  _alertText = msg.trim();
+  renderAlert();
+}
+
+function renderAlert() {
+  const el   = document.getElementById('globalAlert');
+  const txt  = document.getElementById('globalAlertText');
+  if (!el) return;
+  if (_alertText) {
+    el.style.display = 'flex';
+    txt.textContent  = _alertText;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function renderAbsences(){
+  const ct = document.getElementById('absContent');
+  if (!allAbsences.length) {
+    ct.innerHTML = '<div class="empty">Brak zarejestrowanych nieobecności.</div>';
+    return;
+  }
+
+  // Grupuj po osobie
+  const byPerson = new Map();
+  allAbsences.forEach(a => {
+    if (!byPerson.has(a.name)) byPerson.set(a.name, []);
+    byPerson.get(a.name).push(a);
+  });
+
+  // Sortuj: najpierw po scenie (bog→wie→stu), potem po nazwisku
+  const people = [...byPerson.keys()].sort((a,b) => {
+    const sa = _ABS_SC_ORDER.indexOf(_ABS_SCENA_OSOBY[a] || 'bog');
+    const sb = _ABS_SC_ORDER.indexOf(_ABS_SCENA_OSOBY[b] || 'bog');
+    if (sa !== sb) return sa - sb;
+    const la = a.split(' ').slice(1).join(' ');
+    const lb = b.split(' ').slice(1).join(' ');
+    return la.localeCompare(lb, 'pl');
+  });
+
+  // 3 najbliższe nieobecności
+  const upcoming = allAbsences.slice().sort((a,b) => a.date - b.date).slice(0,3);
+  let top = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">`;
+  upcoming.forEach(a => {
+    const sc    = _ABS_SCENA_OSOBY[a.name] || 'bog';
+    const color = _ABS_SC_COLOR[sc];
+    const dateStr = DAYS[a.date.getDay()] + ', ' + a.date.getDate() + ' ' + MONTHS[a.date.getMonth()];
+    const typeLabel = _ABS_TYPE[a.type] || a.type;
+    top += `<div style="background:var(--card);border-radius:8px;padding:12px 14px;border-left:2px solid ${color}">
+      <div style="font-size:9px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${esc(typeLabel)}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(a.name)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${dateStr}</div>
+    </div>`;
+  });
+  top += '</div>';
+
+  // Alert + przycisk dodania ostrzeżenia — alert jest globalny (nad wszystkimi zakładkami)
+  const alertBar = `<div style="margin-bottom:16px;text-align:right">
+    <button onclick="showAlertPrompt()" style="background:none;border:1px solid var(--line);
+      border-radius:4px;color:var(--muted);padding:4px 12px;font-size:10px;font-weight:600;
+      letter-spacing:.5px;text-transform:uppercase;cursor:pointer;font-family:inherit"
+      onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+      + Ostrzeżenie
+    </button>
+  </div>`;
+
+  // Separator przed listą osób
+  let dividers = '';
+  let prevSc = null;
+  const SC_LABEL = { bog:'Bogusławskiego', wie:'Wierzbowa', stu:'Studio' };
+
+  let list = '<div style="display:flex;flex-direction:column;gap:4px">';
+  people.forEach(name => {
+    const absences = byPerson.get(name).sort((a,b) => a.date - b.date);
+    const key      = _nameKey(name);
+    const sc       = _ABS_SCENA_OSOBY[name] || 'bog';
+    const color    = _ABS_SC_COLOR[sc];
+    const count    = absences.length;
+    const isOpen   = window._absOpen[key];
+
+    // Nagłówek sekcji sceny przy zmianie
+    if (sc !== prevSc) {
+      list += `<div style="display:flex;align-items:center;gap:8px;margin:${prevSc?'12px':'0'} 0 6px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${color}">${SC_LABEL[sc]}</span>
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+      </div>`;
+      prevSc = sc;
+    }
+
+    list += `<div style="background:var(--card);border-radius:8px;overflow:hidden;border:1px solid var(--line)">
+      <button onclick="togglePerson('${key}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:inherit">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:5px;height:5px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">${esc(name)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:10px;color:var(--muted)">${count}</span>
+          <span id="absp-arrow-${key}" style="color:var(--muted);font-size:10px;transition:transform .2s;transform:${isOpen?'rotate(180deg)':'rotate(0deg)'}">▼</span>
+        </div>
+      </button>
+      <div id="absp-body-${key}" style="display:${isOpen?'block':'none'};padding:0 14px 12px"></div>
+    </div>`;
+  });
+  list += '</div>';
+
+  ct.innerHTML = top + alertBar + list;
+  renderAlert();
+  people.forEach(name => {
+    if (window._absOpen[_nameKey(name)]) _renderPersonBody(_nameKey(name));
+  });
+}
+
+/* ══ UI — REPERTUAR ══════════════════════════════════ */
+function renderRepertuar(){
+  const ct = document.getElementById('repContent');
+  const { y, m } = repMonth;
+  const prefix = y + '-' + String(m).padStart(2,'0');
+  const entries = Object.entries(repertuar)
+    .filter(([k]) => k.startsWith(prefix))
+    .sort(([a],[b]) => a.localeCompare(b));
+
+  const prev = m === 1 ? {y: y-1, m:12} : {y, m: m-1};
+  const next = m === 12 ? {y: y+1, m: 1} : {y, m: m+1};
+  const now = new Date();
+
+  let h = '<div class="rep-month-nav">';
+  h += (y > 2024 || m > 1) ? `<button class="rep-month-btn" onclick="changeRepMonth(${prev.y},${prev.m})">← ${MNAMES[prev.m-1]}</button>` : '<div></div>';
+  h += `<div class="rep-month-title">${MNAMES[m-1]} ${y}</div>`;
+  h += (y < now.getFullYear() + 2) ? `<button class="rep-month-btn" onclick="changeRepMonth(${next.y},${next.m})">${MNAMES[next.m-1]} →</button>` : '<div></div>';
+  h += '</div>';
+
+  if (repertuarUpdatedAt) {
+    const ud = new Date(repertuarUpdatedAt);
+    if (!isNaN(ud)) {
+      h += `<div style="font-size:10px;color:var(--cr-d);letter-spacing:1px;margin-bottom:14px">Repertuar zaktualizowany: ${ud.getDate()} ${MONTHS[ud.getMonth()].toLowerCase()} ${ud.getFullYear()}</div>`;
+    }
+  }
+
+  if (!entries.length) {
+    if (repertuarLoaded === 'error') {
+      h += `<div class="err-box"><span class="err-box-icon">◈</span>
+        <div class="err-box-title">Nie udało się pobrać repertuaru</div>
+        <div class="err-box-desc">Sprawdź czy Apps Script jest poprawnie wdrożony jako nowa wersja.<br>Otwórz konsolę przeglądarki (F12) po więcej szczegółów.</div></div>`;
+    } else if (repertuarLoaded) {
+      h += `<div style="text-align:center;padding:40px 20px"><div style="">Brak spektakli w tym miesiącu</div><div style="font-size:11px;color:var(--cr-d);margin-top:8px;letter-spacing:1px">Może to przerwa w repertuarze, albo miesiąc poza zakresem pobranych danych</div></div>`;
+    } else {
+      h += '<div class="empty">Ładowanie…</div>';
+    }
+    ct.innerHTML = h; return;
+  }
+
+  entries.forEach(([dateKey, shows]) => {
+    const d = new Date(dateKey);
+    h += `<div class="dg"><div class="dg-hd"><div class="dg-d">${d.getDate()}</div><div><div class="dg-wd">${DAYS[d.getDay()]}</div><div class="dg-mo">${MONTHS[d.getMonth()]} ${y}</div></div><div class="dg-rule"></div></div>`;
+    shows.forEach(s => {
+      const scLbl = s.scene === 'bog' ? 'Bogusławskiego' : s.scene === 'wie' ? 'Wierzbowa' : s.scene === 'stu' ? 'Studio' : null;
+      const scCls = s.scene === 'bog' ? 'rsc-bog' : s.scene === 'wie' ? 'rsc-wie' : s.scene === 'stu' ? 'rsc-stu' : '';
+      h += `<div class="rep-show-card"><div class="rep-show-meta">
+        <span class="rep-show-time">${esc(s.time)}</span>
+        ${scLbl ? `<span class="rep-show-scene ${scCls}">${scLbl}</span>` : ''}
+      </div><div class="rep-show-title">${esc(s.title)}</div></div>`;
+    });
+    h += '</div>';
+  });
+
+  ct.innerHTML = h;
+}
+
+/* ══ NAWIGACJA SEKCJI ════════════════════════════════ */
+function switchSection(sec, btn){
+  ['plan','repertuar','abs','notatki'].forEach(s => {
+    const id = 'sec' + s.charAt(0).toUpperCase() + s.slice(1);
+    const el = document.getElementById(id);
+    if (el) el.className = s === sec ? '' : 'section-hidden';
+  });
+  if (sec === 'repertuar') {
+    if (!repertuarLoaded) {
+      document.getElementById('repContent').innerHTML = '<div class="empty">Ładowanie repertuaru…</div>';
+      // Prefetch jeszcze trwa (lub nie wystartował) -- dociągnij dane,
+      // fetchRepertuarAll samo sprawdzi czy coś już leci i nie zduplikuje zapytania
+      fetchRepertuarAll();
+    } else {
+      renderRepertuar();
+    }
+  }
+  if (sec === 'notatki') loadNotatki();
+}
+
+/* ══ NOTATKI ═════════════════════════════════════════ */
+async function loadNotatki(){
+  // Jeśli dane już są (z prefetcha przy starcie strony) -- pokaż od razu
+  if (notatkiLoaded) { renderNotatki(); return; }
+
+  // Jeśli prefetch jeszcze trwa -- poczekaj na niego zamiast robić duplikat zapytania
+  if (notatkiPrefetchPromise) {
+    document.getElementById('notatkiContent').innerHTML = '<div class="empty">Ładowanie notatek…</div>';
+    await notatkiPrefetchPromise;
+    if (notatkiLoaded) { renderNotatki(); return; }
+  }
+
+  const ct = document.getElementById('notatkiContent');
+  ct.innerHTML = '<div class="empty">Ładowanie notatek…</div>';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=notes';
+    const r = await fetch(url, { cache:'no-store', redirect:'follow' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    if (!json.ok) throw new Error(json.error || 'Błąd notatek');
+    notatki = json.data || [];
+    notatkiLoaded = true;
+    renderNotatki();
+  } catch(e) {
+    console.error('Błąd ładowania notatek:', e);
+    if (!notatkiLoaded) {
+      ct.innerHTML = `<div class="err-box"><span class="err-box-icon">◈</span>
+        <div class="err-box-title">Nie udało się pobrać notatek</div>
+        <div class="err-box-desc">${esc(e.message)}</div></div>`;
+    }
+  }
+}
+
+function renderNotatki(){
+  const ct = document.getElementById('notatkiContent');
+  if (!notatki.length) { ct.innerHTML = '<div class="empty">Brak notatek. Dodaj pierwszą powyżej.</div>'; return; }
+  let html = '';
+  notatki.forEach(n => {
+    const d = new Date(n.date);
+    const dateStr = isNaN(d) ? '' : `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} · ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    html += `<div class="note-card">
+      <div class="note-card-hd">
+        <span class="note-card-author">${esc(n.author || 'Anonim')}</span>
+        <span class="note-card-date">${esc(dateStr)}</span>
+        <button class="note-delete-btn" onclick="deleteNotatka('${esc(n.id)}')" title="Usuń notatkę">Usuń</button>
+      </div>
+      <div class="note-card-text">${esc(n.text)}</div>
+    </div>`;
+  });
+  ct.innerHTML = html;
+}
+
+async function submitNote(){
+  const textEl = document.getElementById('noteText');
+  const authorEl = document.getElementById('noteAuthor');
+  const btn = document.querySelector('.note-submit-btn');
+  const text = textEl.value.trim();
+  const author = authorEl.value.trim();
+  if (!text) { textEl.focus(); return; }
+
+  btn.disabled = true; btn.textContent = 'Dodawanie…';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=addnote&text=' + encodeURIComponent(text) + '&author=' + encodeURIComponent(author);
+    const r = await fetch(url, { cache:'no-store', redirect:'follow' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    if (!json.ok) throw new Error(json.error || 'Błąd dodawania notatki');
+    notatki = json.data || [];
+    notatkiLoaded = true;
+    textEl.value = '';
+    renderNotatki();
+  } catch(e) {
+    alert('Nie udało się dodać notatki: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Dodaj notatkę';
+  }
+}
+
+async function deleteNotatka(id){
+  const pwd = prompt('Podaj hasło aby usunąć notatkę:');
+  if (pwd === null) return; // anulowano
+  if (pwd !== 'TN2026!') { alert('Nieprawidłowe hasło.'); return; }
+  try {
+    const url = APPS_SCRIPT_URL + '?action=deletenote&id=' + encodeURIComponent(id);
+    const r = await fetch(url, { cache:'no-store', redirect:'follow' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    if (!json.ok) throw new Error(json.error || 'Błąd usuwania notatki');
+    notatki = json.data || [];
+    renderNotatki();
+  } catch(e) {
+    alert('Nie udało się usunąć notatki: ' + e.message);
+  }
+}
+
+/* ══ HELPERS ═════════════════════════════════════════ */
+function showFatalError(title, detail){
+  hideSplash();
+  setSyncStatus('err', 'Błąd połączenia · ' + nowStr());
+  document.getElementById('planContent').innerHTML = `
+    <div class="err-box">
+      <span class="err-box-icon">◈</span>
+      <div class="err-box-title">${esc(title)}</div>
+      <div class="err-box-desc">Sprawdź adres Apps Script i czy wdrożenie jest aktywne.</div>
+      <div class="err-box-code">${esc(detail || '')}</div>
+    </div>`;
+}
+function setSyncStatus(type, text){
+  document.getElementById('syncDot').className = 'sync-dot' + (type === 'ok' ? '' : ' ' + type);
+  document.getElementById('syncInfo').textContent = text;
+}
+function hideSplash(){ document.getElementById('splash').classList.add('out'); document.getElementById('app').classList.add('on'); }
+function spStatus(t){ document.getElementById('spStatus').textContent = t; }
+function dk(d){ if (!(d instanceof Date)) return String(d); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function nowStr(){ return new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}); }
+function set(id,v){ document.getElementById(id).textContent = v; }
+function setLoad(on){ document.getElementById('loadBar').classList.toggle('on', on); }
+</script>
+</body>
+</html>

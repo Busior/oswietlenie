@@ -1,1 +1,2 @@
-# oswietlenie
+# plan-pracy
+Plan Pracy oswietleniowcy
